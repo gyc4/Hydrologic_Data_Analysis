@@ -50,16 +50,12 @@ Did you complete the form? (**yes**/no)
 6. Set up your work session. Check your working directory, load packages `tidyverse`,  `dataRetrieval`, and `lubridate`. Set your ggplot theme as theme_classic (you may need to look up how to set your theme).
 
 ```{r, message = FALSE}
-install.packages('tidyverse')
-install.packages('dataRetrieval')
-install.packages('lubridate')
-
 library(tidyverse)
 library(dataRetrieval)
 library(lubridate)
 
 
-theme_set(theme_classic)
+theme_set(theme_classic())
 
 ```
 
@@ -82,7 +78,6 @@ colnames(discharge)[colnames(discharge)=="X_00065_00003"] <- "GageHeight"
 8. Add a "year" column to your data frame (hint: lubridate has a `year` function).
 
 ```{r}
-discharge <- add_column('Year', year('Date'))
 
 discharge$year <- year(as.Date(discharge$Date, origin = '2009-08-01')) 
 
@@ -96,6 +91,8 @@ discharge$year <- year(as.Date(discharge$Date, origin = '2009-08-01'))
 
 ```{r}
 library(ggplot2)
+
+theme_set(theme_classic())
 
 dischargePlot <-
   ggplot(discharge, aes(x = GageHeight, y = Discharge)) +
