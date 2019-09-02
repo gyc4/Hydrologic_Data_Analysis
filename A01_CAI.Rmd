@@ -95,26 +95,36 @@ discharge$year <- year(as.Date(discharge$Date, origin = '2009-08-01'))
 * Make points 50 % transparent
 
 ```{r}
+library(ggplot2)
+
 dischargePlot <-
   ggplot(discharge, aes(x = GageHeight, y = Discharge)) +
-  geom_line() +
-  xlab("Gage Height (ft)")
+  geom_line(aes(group = 1), colour = "#000099") +
+  geom_point(alpha = 0.50, size = 1, colour = "#CC0000") +
+  xlab("Gage Height (ft)") + 
+  ylab("Discharge (ft^3/s)")
 print(dischargePlot)
 
 ```
 
 10. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: 
+> ANSWER: It seems that, the lower the gage height, the more discharge measurements were taken, as well as the lower the measurement. Perhaps this is an indication that deeper water moves slower than water near the top of the Eno. This seems relatively intuitive.
 
 11. Create a ggplot violin plot of discharge, divided by year. (Hint: in your aesthetics, specify year as a factor rather than a continuous variable). Make the following edits to follow good data visualization practices: 
 
 * Remove x axis label
 * Add a horizontal line at the 0.5 quantile within each violin (hint: draw_quantiles)
 ```{r}
-
+library(ggplot2)
+discharge$year <- as.factor(discharge$year)
+dischargeviolinPlot <- 
+  ggplot(discharge, aes(x = year, y = Discharge)) +   
+  geom_violin(trim = TRUE, draw_quantiles = c(0.5)) +
+  xlab(NULL) 
+print(dischargeviolinPlot)
 ```
 
 12. Interpret the graph you made. Write 2-3 sentences communicating the main takeaway points. 
 
-> ANSWER: 
+> ANSWER: It seems the range of discharge is very great and maybe violin graphs are not the best way to visualize the data in its current state. Other than that, however, it seems that discharge averages and quartiles oscillate through the years - as evidenced by the violin plots cycling from stretched to compressed to stretched again as we move through the decade. Similarly, the highest discharge of each year does not remain the same, and seems to cycle.
