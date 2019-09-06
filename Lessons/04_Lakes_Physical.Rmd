@@ -17,6 +17,13 @@ editor_options:
 ## Opening Discussion
 We analyzed temperature profiles and seasonal changes on Wednesday. What were some key takeaway points about thermal stratification and mixing?
 
+There are two main, stratified layers in lakes. They mix within each other via traditional methods of mixing like convection, and mix between the two only when there is strong wind and a smaller density gradient between the layers.
+Epi - top
+Meta - middle
+Hypo - bottom
+
+Water is the most dense at 4 degrees Celsius
+
 ## Session Set Up
 ```{r, message = FALSE}
 getwd()
@@ -65,6 +72,8 @@ Tempprofiles2016 <-
   theme(legend.position = "none")
 print(Tempprofiles2016)
 
+#You can specifiy a facet only if it's separate values in one column. R cannot facet across columns. You have to create as many graphs as there are columns, even if they will end up in the same graph.
+
 Lightprofiles2016 <- 
   ggplot(Pauldata.2016, aes(x = irradianceWater, y = depth, color = daynum)) +
   geom_point() +
@@ -96,15 +105,21 @@ print(Physicalprofiles2016)
 
 How do temperature profiles vary over the course of a season? What are the mechanisms for this pattern?
 
-> 
+> Temperature generally rises over the course of the summer season - rising the most in the epilimnion and the least in the hypolimnion. The mechanisms for this pattern are the warming of the water by the sun/atmosphere.
 
 How do irradiance profiles vary over the course of a season? What are the mechanisms for this pattern?
 
-> 
+> Irradiance seems to peak mid-summer, which corresponds to the length of the day peaking around the same time. The deeper you go, the more light is scattered - this is exacerbated by the increase of density in water molecules.
 
 How do dissolved oxygen profiles vary over the course of a season? What are the mechanisms for this pattern?
 
-> 
+> Dissolved oxygen is at its highest at the beginning of the season and lowest at the end. It also seems to drop off considerably after a certain depth. 
+
+> Colder water can hold more dissolved gases. 
+
+> Bumps up in the metalimnion because phytoplankton love that area and photosynthesize, increasing the DO. [DEEP CHLOROPHYLL MAXIMUM] They hang out there because there is just enough sunlight to grow and there is still access to the nutrient-rich hypolimnion. 
+
+> Bacterial respiration occurs in the hypolimnion and further depletes DO levels. 
 
 
 ## Data Analysis
@@ -122,8 +137,12 @@ Steps:
 5. Create a ggplot of surface temps by date and facet by month. Add `geom_smooth(se = FALSE, method = lm)` to the plot to display the regression line.
 
 ```{r}
-
-
+Pauldata$month <- month(as.Date(Pauldata$sampledate, origin = '1984-05-27'))
+Pauldatafilter <- filter(Pauldata, depth == 0)
+PauldatafilterMay <- filter(Pauldatafilter, month == 5)
+PauldatafilterJune <- filter(Pauldatafilter, month ==6)
+PauldatafilterJuly <- filter(Pauldatafilter, month == 7)
+PauldatafilterAugust <- filter(Pauldatafilter, month == 8)
 
 ```
 
