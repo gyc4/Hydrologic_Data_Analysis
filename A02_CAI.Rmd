@@ -99,7 +99,6 @@ print(Tempprofiles19842016)
 ```{r}
 NTLJuly <- filter(NTLdata, year4== 2016)
 NTLJuly <- filter(NTLJuly, NTLJuly$daynum>206 & NTLJuly$daynum<210)
-
 ```
 
 9. Plot a profile line graph of temperature by depth, one line per lake. Each lake can be designated by a separate color.
