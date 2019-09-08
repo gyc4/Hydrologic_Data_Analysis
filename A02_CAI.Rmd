@@ -128,11 +128,13 @@ print(TempprofilesJuly)
 11. Run the same analyses we ran in class to determine if surface lake temperatures for a given month have increased over time ("Long-term change in temperature" section of day 4 lesson in its entirety), this time for either Peter or Tuesday Lake. 
 
 ```{r}
-Peterdata <- filter(NTLdata, lakename == "Peter Lake")
+
+
+Peterdatafilter <- dplyr::filter(NTLdata, lakename == "Peter Lake")
 
 Peterdatafilter <- Peterdatafilter %>%
   mutate(Month = month(sampledate)) %>%
-  filter(depth == 0 & Month <9)
+  filter(depth == 0 & Month <9 & Month >4)
 
 PeterdatafilterMay <- filter(Peterdatafilter, month == 5)
 PeterdatafilterJune <- filter(Peterdatafilter, month == 6)
@@ -151,15 +153,15 @@ summary(Temptrend.July)
 Temptrend.August <- lm(data = PeterdatafilterAugust, temperature_C ~ year4)
 summary(Temptrend.August)
 
-
+#Peter Lake has warmed an average of 0.034 degrees Celsius, with the most significant increase occuring in the month of July.
 
 ggplot(Peterdatafilter, aes(x = sampledate, y = temperature_C)) +
   geom_point() +
   facet_grid(rows = vars(Month)) +
-  geom_smooth(se = FALSE, method = lm)
-
+  geom_smooth(se = FALSE, method = lm) +
+  labs(x = "Date (Years)", y =  expression("Temperature"(degree*C)))
 ```
 
 12. How do your results compare to those we found in class for Paul Lake? Do similar trends exist for both lakes?
 
-> 
+> The results for Peter Lake are extremely similar to the results for Paul Lake. Although the average warming was lower for Paul Lake (increase of 0.028 degrees Celsius), it's notable that both lakes saw an increase at all. Additionally, the most increase was seen in the same month for both lakes: July. The significance of the July increase is lower for Paul than for Peter Lake, but both P-values are near zero, making them both significant increases nonetheless. 
