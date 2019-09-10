@@ -131,14 +131,14 @@ print(TempprofilesJuly)
 
 Peterdatafilter <- dplyr::filter(NTLdata, lakename == "Peter Lake")
 
-Peterdatafilter <- Peterdatafilter %>%
-  mutate(Month = month(sampledate)) %>%
-  filter(depth == 0 & Month <9 & Month >4)
+Peterdatafilter2 <- Peterdatafilter %>%
+  mutate(month = month(sampledate)) %>%
+  filter(depth == 0 & month <9 & month >4)
 
-PeterdatafilterMay <- filter(Peterdatafilter, month == 5)
-PeterdatafilterJune <- filter(Peterdatafilter, month == 6)
-PeterdatafilterJuly <- filter(Peterdatafilter, month == 7)
-PeterdatafilterAugust <- filter(Peterdatafilter, month == 8)
+PeterdatafilterMay <- filter(Peterdatafilter2, month == 5)
+PeterdatafilterJune <- filter(Peterdatafilter2, month == 6)
+PeterdatafilterJuly <- filter(Peterdatafilter2, month == 7)
+PeterdatafilterAugust <- filter(Peterdatafilter2, month == 8)
 
 Temptrend.May <- lm(data = PeterdatafilterMay, temperature_C ~ year4)
 summary(Temptrend.May)
@@ -154,9 +154,9 @@ summary(Temptrend.August)
 
 #Peter Lake has warmed an average of 0.034 degrees Celsius, with the most significant increase occuring in the month of July.
 
-ggplot(Peterdatafilter, aes(x = sampledate, y = temperature_C)) +
+ggplot(Peterdatafilter2, aes(x = sampledate, y = temperature_C)) +
   geom_point() +
-  facet_grid(rows = vars(Month)) +
+  facet_grid(rows = vars(month)) +
   geom_smooth(se = FALSE, method = lm) +
   labs(x = "Date (Years)", y =  expression("Temperature"(degree*C)))
 ```
