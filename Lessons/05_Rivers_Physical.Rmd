@@ -16,6 +16,8 @@ editor_options:
 ## Opening Discussion
 What are the physical properties of streams and rivers? What variables might be of interest?
 
+Flow (discharge over time), velocity, depth, width, river bed material, temperature (gradient), mixing, turbidity, slope 
+
 ## Session Set Up
 
 ```{r, message = FALSE}
@@ -46,6 +48,14 @@ DvsGHplot <-
   ggplot(EnoDischarge.ratingcurve, aes(x = Discharge, y = Gage.Height)) +
   geom_point(alpha = 0.5) 
 print(DvsGHplot)
+# It's a log relationship
+
+DvsGHplot <-
+  ggplot(EnoDischarge.ratingcurve, aes(x = Gage.Height, y = Discharge)) +
+  geom_point(alpha = 0.5) 
+print(DvsGHplot)
+# Should we swap axis?
+
 ```
 
 ### Data import
@@ -65,7 +75,7 @@ We will be analyzing data from the following rivers/streams today:
 * Nehalem River in Oregon
 
 ```{r}
-EnoSummary <- whatNWISdata(siteNumbers = "02096500")
+HawSummary <- whatNWISdata(siteNumbers = "02096500")
 VerdeSummary <- whatNWISdata(siteNumbers = "09504000")
 BitterrootSummary <- whatNWISdata(siteNumbers = "12344000")
 SaukSummary <- whatNWISdata(siteNumbers = "05270500")
@@ -74,7 +84,7 @@ NehalemSummary <- whatNWISdata(siteNumbers = "14299800")
 
 What data are available from the sites? Pay particular attention to the parameter codes and statistic codes.
 
->
+> Temperature, Gage height, discharge, etc.
 
 What is the period of record for mean daily discharge at each of these sites?
 
@@ -94,7 +104,7 @@ We will access the last 10 years of data for our purposes today. Alternatively, 
 
 ```{r}
 # Import data
-EnoDischarge <- readNWISdv(siteNumbers = "02096500",
+HawDischarge <- readNWISdv(siteNumbers = "02096500",
                      parameterCd = "00060", # discharge (ft3/s)
                      startDate = "2009-09-01",
                      endDate = "2019-08-31")
@@ -119,27 +129,30 @@ NehalemDischarge <- readNWISdv(siteNumbers = "14299800",
                      startDate = "2009-09-01",
                      endDate = "2019-08-31")
 
+# Daily mean (00003) is the default
+
 ```
 
 ### Data Wrangling
 ```{r}
 
 # Renaming columns (one method of multiple)
-names(EnoDischarge)[4:5] <- c("Eno.Discharge", "Eno.Approval.Code")
+names(HawDischarge)[4:5] <- c("Haw.Discharge", "Haw.Approval.Code")
 names(VerdeDischarge)[4:5] <- c("Verde.Discharge", "Verde.Approval.Code")
 names(BitterrootDischarge)[4:5] <- c("Bitterroot.Discharge", "Bitterroot.Approval.Code")
 names(SaukDischarge)[4:5] <- c("Sauk.Discharge", "Sauk.Approval.Code")
 names(NehalemDischarge)[4:5] <- c("Nehalem.Discharge", "Nehalem.Approval.Code")
 
 # Remove agency_cd column from each data frame
-EnoDischarge <- select(EnoDischarge, -agency_cd)
+# SELECT = COLUMNS. FILTER = ROWS
+HawDischarge <- select(HawDischarge, -agency_cd)
 VerdeDischarge <- select(VerdeDischarge, -agency_cd)
 BitterrootDischarge <- select(BitterrootDischarge, -agency_cd)
 SaukDischarge <- select(SaukDischarge, -agency_cd)
 NehalemDischarge <- select(NehalemDischarge, -agency_cd)
 
 # Join data frames
-CombinedDischarge <- full_join(EnoDischarge, VerdeDischarge, by = "Date") %>%
+CombinedDischarge <- full_join(HawDischarge, VerdeDischarge, by = "Date") %>%
   full_join(., BitterrootDischarge, by = "Date") %>%
   full_join(., SaukDischarge, by = "Date") %>%
   full_join(., NehalemDischarge, by = "Date")
@@ -148,14 +161,14 @@ CombinedDischarge <- full_join(EnoDischarge, VerdeDischarge, by = "Date") %>%
 ### Data Visualization
 ```{r}
 # Build a ggplot
-EnoPlot <- 
-  ggplot(CombinedDischarge, aes(x = Date, y = Eno.Discharge)) +
+HawPlot <- 
+  ggplot(CombinedDischarge, aes(x = Date, y = Haw.Discharge)) +
   geom_line() +
-  ggtitle("Eno River") +
+  ggtitle("Haw River") +
   labs(x = "", y = expression("Discharge (ft"^3*"/s)")) + 
   theme(plot.title = element_text(margin = margin(b = -10), size = 12), 
         axis.text.x = element_blank(), axis.title.x = element_blank())
-print(EnoPlot)
+print(HawPlot)
 
 VerdePlot <- 
   ggplot(CombinedDischarge, aes(x = Date, y = Verde.Discharge)) +
@@ -193,22 +206,22 @@ NehalemPlot <-
 print(NehalemPlot)
 
 CombinedPlot <- 
-  plot_grid(EnoPlot, VerdePlot, BitterrootPlot, SaukPlot, NehalemPlot, 
+  plot_grid(HawPlot, VerdePlot, BitterrootPlot, SaukPlot, NehalemPlot, 
             ncol = 1)
 print(CombinedPlot)
 ```
 
 How does the magnitude of discharge compare for these rivers?
 
->
+> Some rivers, like the Haw, are on completely different scales than the rest. Verde is also notably different because of how erratic it is - with a spike in discharge extremely recently. 
 
 Which of these rivers have a seasonal cycle of discharge? How might you explain the presence and timing of seasonal cycles based on climatic conditions?
 
->
+> Bitterroot, Sauk, and Nehalem Rivers seem to be running on a seasonal cycle of lulls and peaks in discharge. It could be possible that these seasonal cycles correspond to the arrival of snowmelt/absence of it, as well as the river itself icing over. Additionally, these rivers might be in a location that experiences wet and dry seasons.
 
 Hypothetical question: If you wanted to create a ggplot using facets instead of `plot_grid`, how would you go about wrangling your dataset differently? 
 
->
+> Could facet by site number. Would use (rbind) 
 
 ## Defining "typical" discharge pattern
 Let's take the Bitterroot River, which displays a clear seasonal cycle. Let's define the median discharge on a given day of year and overlay this onto the range experienced. We will take a longer period of record this time.
@@ -224,7 +237,7 @@ BitterrootDischarge.Historical <- mutate(BitterrootDischarge.Historical,
                                          DOY = yday(Date))
 
 BitterrootDischarge.Pattern <- BitterrootDischarge.Historical %>%
-  group_by(DOY) %>%
+  group_by(DOY) %>% #group by day of year
   summarise(Median.Discharge = median(Discharge), 
             Max.Discharge = max(Discharge),
             Min.Discharge = min(Discharge))
@@ -242,3 +255,4 @@ Challenge: Edit the code above so that rather than plotting the minimum and maxi
 
 ## Closing Discussion
 What are your impressions of seasonal and interannual discharge for our example rivers? How might you go about interpreting discharge data for any given river?
+
