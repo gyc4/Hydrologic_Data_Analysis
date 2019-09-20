@@ -30,6 +30,11 @@ packages <- c("tidyverse",
               "lubridate")
 invisible(lapply(packages, library, character.only = TRUE)) 
 
+install.packages("xts")
+install.packages("dygraphs")
+library(xts)
+library(dygraphs)
+
 
 theme_set(theme_classic(base_size = 12))
 ```
@@ -45,7 +50,7 @@ Bacteria is present in almost every stream on earth. Most bacteria are harmless,
 
 Why might it be helpful to have multiple ways to measure bacteria?
 
->
+> 
 
 Where and when do you think the biggest risks from harmful bacteria are?
 
@@ -74,7 +79,7 @@ dat.raw <- readNWISqw(siteNumbers = "01096550", #Merrimack River upstream of Low
                      startDate = "",
                      endDate = "")
 
-str(dat.raw, give.attr = FALSE)
+str(dat.raw, give.attr = FALSE) #Take a look at the structure of the data
 
 microb.dat <- dat.raw %>%
   select(Date = sample_dt, 
@@ -142,7 +147,7 @@ Total.cell.plot <- ggplot(microb.dat, aes(x = Date)) +
 print(Total.cell.plot)
 
 Microbes.plot <- plot_grid(Total.coli.plot +
-                             labs(title = "Total Coliform", y = ""),
+                             labs(title = "Total Coliform", y = ""), #Moved Yaxis to the title and made the actual Y axis blank
                            F.coli.45.plot + 
                              labs(title = "Fecal Coliform (.45)", y = "") ,
                            F.coli.7.plot + 
@@ -166,7 +171,7 @@ How would you use all of this data to talk about changes in microbial water qual
 
 Do you think water quality has improved between 1970 and 2000? Why or why not?
 
->
+> Yes
 
 The city of Lawrence, MA is downstream of Lowell and gets its drinking water from the Merrimack River. Use the federal drinking water standard for Total Coliforms (https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations#Microorganisms) to comment on whether or not this water necessarily needs to be treated for bacteria.
 
@@ -175,6 +180,8 @@ The city of Lawrence, MA is downstream of Lowell and gets its drinking water fro
 ## Seasonal Trends in Water Quality
 
 ```{r seasons_analysis}
+library(lubridate)
+
 monthly.obs <- microb.dat %>%
   mutate(month = month(Date)) %>%
   group_by(month) %>%
@@ -197,11 +204,29 @@ coli.seasons <- ggplot(coli.monthly.summaries, aes(x = month)) +
     labs(y = "Total coliforms (cfu / 100 ml)") 
 
 print(coli.seasons)
+
+
+entero.monthly.summaries <- microb.dat %>%
+  mutate(month = month(Date)) %>%
+  group_by(month) %>%
+  select(month, F.strep.ente) %>%
+  summarize_all(funs(Median = median(., na.rm = T),
+                 quant25 = quantile(., .25, na.rm = T),
+                 quant75 = quantile(., .75, na.rm = T)))
+
+entero.seasons <- ggplot(entero.monthly.summaries, aes(x = month)) +
+  geom_ribbon(aes(ymin = quant25, ymax = quant75), alpha = 0.3) +
+  geom_line(aes(y = Median)) +
+  scale_x_continuous(name = "Month",
+                     breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) +
+    labs(y = "m-Enterococcus (cfu / 100 ml)") 
+
+print(entero.seasons)
 ```
 
 When are total coliform concentrations highest? Why might this be?
 
->
+> In the summer, when it's hottest
 
 Does this pattern also exist for the other microbial indicators?
 
@@ -215,7 +240,7 @@ The USGS site that we got the water quality data from does not have discharge da
 
 Which site's discharge data would better indicate when the city of Lowell has exprienced a big rain event?
 
->
+> The smaller river, as it reacts better and quicker to local weather conditions
 
 What would a CSO event look like in the data?
 
@@ -237,10 +262,10 @@ ggplot(discharge.dat, aes(x = Date, y = Discharge_cfs)) +
 We will use an interactive plotting function, dygraphs to look at the discharge data and microbial data overlain on each other. Let's look first at Total Coliform.
 
 ```{r make_dygraph)}
-Total_Coliform <- with(microb.dat, xts(x = Total.coli, order.by = Date))
+Total_Coliform <- with(microb.dat, xts(x = Total.coli, order.by = Date)) #Xts format = time series data
 Discharge <- with(discharge.dat, xts(x = Discharge_cfs, order.by = Date))
 
-DyDat <- cbind(Total_Coliform, Discharge)
+DyDat <- cbind(Total_Coliform, Discharge) #To view them together
 
 dygraph(DyDat) %>% 
   dySeries("Total_Coliform", axis = "y2") %>% 
