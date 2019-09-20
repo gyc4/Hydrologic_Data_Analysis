@@ -15,10 +15,13 @@ editor_options:
 
 ## Opening Discussion
 What is water quality? What are some of the things it encompasses? 
+<<<<<<< HEAD
 pH, DO, turbidity, nutrient level, heavy metals, other containmenents
 
 How well does it support life? 
 Water quality for some purpose
+=======
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 ## Session Set Up
 
@@ -29,7 +32,10 @@ packages <- c("dataRetrieval", "tidyverse", "cowplot", "lubridate")
 invisible(suppressPackageStartupMessages(lapply(packages, 
                                                 library, 
                                                 character.only = TRUE))) 
+<<<<<<< HEAD
 #invisible = doesn't print out any of these messages in the final file
+=======
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 
 theme_set(theme_classic())
@@ -43,7 +49,11 @@ theme_set(theme_classic())
 
 Why are these important measures of water quality?
 
+<<<<<<< HEAD
 > 
+=======
+>
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 What types of disturbances can impact these parameters?
 
@@ -59,13 +69,19 @@ dat.raw <- readNWISqw(siteNumbers = c("03201300","03206790"), #Kanawha river & T
                      startDate = "",
                      endDate = "")
 
+<<<<<<< HEAD
 str(dat.raw, give.attr = FALSE) #Look at structure of data
 
 #Let's clean up this data structure
+=======
+str(dat.raw, give.attr = FALSE)
+
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 dat <- dat.raw %>%
   select(Site = site_no, 
          Date = sample_dt,
          Parameter = parm_cd, 
+<<<<<<< HEAD
          Value = result_va) %>% #Select desired columns
   group_by(Date, Parameter, Site) %>% #Group
   summarize(Value = mean(Value)) %>% #Take mean values per day
@@ -73,6 +89,15 @@ dat <- dat.raw %>%
   rename(SpC = '00095', pH = '00400') %>%
   mutate(Site = case_when(Site == "03201300" ~ "Kanawha River",
                           Site == "03206790" ~ "Twelvepole Creek")) #Rename the sites
+=======
+         Value = result_va) %>%
+  group_by(Date, Parameter, Site) %>%
+  summarize(Value = mean(Value)) %>%
+  spread(key = Parameter, value = Value) %>%
+  rename(SpC = '00095', pH = '00400') %>%
+  mutate(Site = case_when(Site == "03201300" ~ "Kanawha River",
+                          Site == "03206790" ~ "Twelvepole Creek"))
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 dat.early <- dat %>%
   filter(Date < "1977-01-01")
@@ -88,10 +113,17 @@ pH.plot <- ggplot(dat.early, aes(x = Date, y = pH, color = Site)) +
   scale_color_manual(values = c("steelblue4", "darkorange4")) +
   ggtitle("pH of Two West Virginia Rivers 1956:1976")
 
+<<<<<<< HEAD
 print(pH.plot) #Bad plot
 
 pH.plot.2 <- ggplot(dat.early, aes(x = Date, y = pH, color = Site)) +
   geom_smooth() + #Plot general direction of data
+=======
+print(pH.plot)
+
+pH.plot.2 <- ggplot(dat.early, aes(x = Date, y = pH, color = Site)) +
+  geom_smooth() +
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   geom_point() +
   scale_color_manual(values = c("steelblue4", "darkorange4")) +
     ggtitle("pH of Two West Virginia Rivers 1956:1976")
@@ -100,8 +132,12 @@ pH.plot.2 <- ggplot(dat.early, aes(x = Date, y = pH, color = Site)) +
 print(pH.plot.2)
 
 SpC.plot <- ggplot(dat.early, aes(x = Date, y = SpC, color = Site)) +
+<<<<<<< HEAD
   geom_smooth() +
   geom_point() +
+=======
+  geom_line() +
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   labs(y = expression("Specific Conductance ("*mu*S * cm**-1*")")) +
   scale_color_manual(values = c("steelblue4", "darkorange4")) +
     ggtitle("Specific Conductance of Two West Virginia Rivers 1956:1976")
@@ -112,6 +148,7 @@ print(SpC.plot)
 
 What differences do you see?
 
+<<<<<<< HEAD
 > Biggest difference is in sample size of both rivers
 
 Why might mining be causing the changes you see?
@@ -121,6 +158,17 @@ Why might mining be causing the changes you see?
 What is the data frequency of these water quality samples? Why don't we have daily values? How does this inform your interpretation of the data?
 
 > Only three times a month. Frequency will affect how much variability we will see.
+=======
+>
+
+Why might mining be causing the changes you see?
+
+>
+
+What is the data frequency of these water quality samples? Why don't we have daily values? How does this inform your interpretation of the data?
+
+>
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   
 ## What can legislative protections do for water quality?
 
@@ -128,7 +176,11 @@ In 1977 the Surface Mining Control and Reclamation Act (SMCRA) was passed. Take 
 ```{r View_Kanawha_all}
 pH.plot <- ggplot(dat, aes(x = Date, y = pH, color = Site)) +
   geom_line() +
+<<<<<<< HEAD
   geom_vline(xintercept = 1977, color = "grey", alpha = 0.8, lwd = 2, lty = 2) + #Line demarcating the passage of the Act
+=======
+  geom_vline(xintercept = 1977, color = "grey", alpha = 0.8, lwd = 2, lty = 2) + 
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   scale_color_manual(values = c("steelblue4", "darkorange4")) +
   ggtitle("pH of Two West Virginia Rivers 1956:2000")
 
@@ -137,7 +189,11 @@ print(pH.plot)
 pH.plot.2 <- ggplot(dat, aes(x = Date, y = pH, color = Site)) +
   geom_smooth() +
   geom_point() +
+<<<<<<< HEAD
   geom_vline(xintercept = 1977, color = "grey", alpha = 0.8, lwd = 2, lty = 2) + #Same as above
+=======
+  geom_vline(xintercept = 1977, color = "grey", alpha = 0.8, lwd = 2, lty = 2) + 
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   scale_color_manual(values = c("steelblue4", "darkorange4")) +
     ggtitle("pH of Two West Virginia Rivers 1956:2000")
 
@@ -157,7 +213,11 @@ print(SpC.plot)
 
 Discuss with your group about the differences you see.
 
+<<<<<<< HEAD
 > For spC, the variability decreased, as well as the level. pH, twelvepol decreased a lot while kanawha leveled out
+=======
+>
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 ## Were remediation efforts successful?
 
@@ -167,15 +227,24 @@ Let's test whether or not the yearly average concentrations in the Kanawha River
 Kanawha.yearly.averages <- dat %>%
   filter(Site == "Kanawha River") %>%
   group_by(Year = year(Date)) %>%
+<<<<<<< HEAD
   select(-Site, -Date) %>% #Get rid of these
   summarize_all(mean) %>% 
+=======
+  select(-Site, -Date) %>%
+  summarize_all(mean) %>%
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
   mutate(bin = case_when(Year %in% c(1958:1977) ~ "Pre",
                          Year %in% c(1978:1997) ~ "Post")) 
 
 Kanawha.early <- Kanawha.yearly.averages %>% filter(Year %in% c(1958:1977))
 Kanawha.late <- Kanawha.yearly.averages %>% filter(Year %in% c(1978:1997))
 
+<<<<<<< HEAD
 #See if these are normal distributions
+=======
+
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 histograms <- ggplot(Kanawha.yearly.averages %>% filter(!is.na(bin)), 
        aes(x = SpC, fill = bin)) +
   geom_histogram(alpha = 0.8) +
@@ -189,7 +258,10 @@ histograms <- ggplot(Kanawha.yearly.averages %>% filter(!is.na(bin)),
 
 print(histograms)
 
+<<<<<<< HEAD
 #Histogram wasn't the best choice, need something else
+=======
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 densityplots <- ggplot(Kanawha.yearly.averages %>% filter(!is.na(bin)), 
        aes(x = SpC, fill = bin)) +
   geom_density(alpha = 0.8) +
@@ -203,25 +275,42 @@ densityplots <- ggplot(Kanawha.yearly.averages %>% filter(!is.na(bin)),
 
 print(densityplots)
 
+<<<<<<< HEAD
 x <- (Kanawha.yearly.averages %>% filter(bin == "Pre"))$SpC #Turn into vectors
 y <- (Kanawha.yearly.averages %>% filter(bin == "Post"))$SpC
 #See if these are really normally distributed
+=======
+x <- (Kanawha.yearly.averages %>% filter(bin == "Pre"))$SpC
+y <- (Kanawha.yearly.averages %>% filter(bin == "Post"))$SpC
+
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 qqnorm(x, las = 1); qqline(x)
 qqnorm(y, las = 1); qqline(y)
 
 cat("Length x:", length(x), "\n", "Length y:", length(y))
 
+<<<<<<< HEAD
 #Run ttest
+=======
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 t.test(x, y)
 ```
 
 How would you communicate these results to a manager? 
 
+<<<<<<< HEAD
 > There has been a statistically significant change. So significant that it is very unlikely that we would be wrong to assume that the legislation worked. 
 
 What can you say with data visualization that you can't say with just the statistical tests?
 
 > 
+=======
+>
+
+What can you say with data visualization that you can't say with just the statistical tests?
+
+>
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 
 ## How have individual ions changed over the this timeperiod?
@@ -243,6 +332,7 @@ Manganese.plot <- ggplot(Manganese.dat, aes(x = Date, y = Manganese_ugL)) +
   ggtitle("Manganese Concentrations in the Kanawha River")
 
 print(Manganese.plot)
+<<<<<<< HEAD
 
 Manganese.pointplot <- ggplot(Manganese.dat, aes(x = Date, y = Manganese_ugL)) +
   geom_point() +
@@ -251,11 +341,17 @@ Manganese.pointplot <- ggplot(Manganese.dat, aes(x = Date, y = Manganese_ugL)) +
   ggtitle("Manganese Concentrations in the Kanawha River")
 
 print(Manganese.pointplot)
+=======
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 ```
 
 Try plotting the manganese data with points instead of lines. Which do you prefer? Why?
 
+<<<<<<< HEAD
 > Honestly, I prefer the line plot just because I appreciate being able to follow visually the change over time. With the plots, it's harder to see which plots were temporally before/after the others, etc.
+=======
+>
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 EPA drinking water standards for Manganese are 0.05 *_mg/L_*. How does the Kanawha stack up?
 
@@ -264,6 +360,7 @@ EPA drinking water standards for Manganese are 0.05 *_mg/L_*. How does the Kanaw
 Take some time to look at other ions as well. Some suggestions are sulfate (```00945```), nitrate (```71851```), and iron (```71885```), or use the ```whatNWISdata()``` function to find others! EPA drinking water regulations can be found here: https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations. Pay close attention to units! Information about parameter codes can be found in the dataframe ```parameterCdFile```.
 
 ```{r other_ion_data}
+<<<<<<< HEAD
 Iron.raw <- readNWISqw('03201300', parameterCd = '71885')
 
 Iron.dat <- Iron.raw %>%
@@ -276,6 +373,9 @@ Iron.plot <- ggplot(Iron.dat, aes(x = Date, y = Iron_ugL)) +
   ggtitle("Iron Concentrations in the Kanawha River")
 
 print(Iron.plot)
+=======
+
+>>>>>>> 096cc38c2f3f68492572892a483a0b1d090a9cd0
 
 ```
 
