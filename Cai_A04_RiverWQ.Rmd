@@ -1,9 +1,11 @@
 ---
-title: "Assignment 4: Water Quality in Rivers"
+title: 'Assignment 4: Water Quality in Rivers'
 author: "Theo Cai"
-output: html_document
 geometry: margin=2.54cm
-editor_options: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -137,44 +139,54 @@ print(Nutrient.plot)
 10. Turbulent flow in rivers mixes oxygen into the water column. As discharge decreases, water moves slower, and oxygen diffuses slower into the water from the atmosphere. Download and reformat the daily discharge data for New Hope Creek (function `readNWISdv()`, site `02097314`, parameter `00060`). 
 
 ```{r bring_discharge}
-install.packages("dataRetrieval")
-library(dataRetrieval)
-discharge.raw <- readNWISqw(siteNumbers = "02097314",
+discharge.raw <- readNWISdv(siteNumbers = "02097314",
                             parameterCd = "00060",
                             startDate = "",
                             endDate = "")
+
+discharge.dat <- discharge.raw %>%
+  select(Date = Date, Discharge_cfs = X_00060_00003)
 ```
 
 11. Create a dygraph of discharge and oxygen concentrations. You should have discharge on the y axis and oxygen concentration on the y2 axis. Set your y-axes limits so that they don't change as you zoom in and out. (hint: use `dyAxis(..., valueRange = c(0, 6500))` for discharge & `dyAxis(..., valueRange = c(0, 13))` for oxygen).
 ```{r}
+OConcentration <- with(O2.dat, xts(x = OConcen_mgL, order.by = Date))
+Discharge <- with(discharge.dat, xts(x = Discharge_cfs, order.by = Date))
 
+DyDat <- cbind(OConcentration, Discharge)
+
+dygraph(DyDat) %>%
+  dySeries("OConcentration", axis = "y2") %>%
+  dyAxis(name = "y", label = "Discharge (cfs)", valueRange = c(0, 6500)) %>%
+  dyAxis(name = "y2", label = "Total Oxygen Concentration (mg/L)", valueRange = c(0, 13)) %>%
+  dyRangeSelector()
 ```
 
 12. Do hypoxic events happen in the wet or the dry season? How many days after storm events (of at least 100 cfs) do they occur? 
 
-> 
+> It seems that hypoxic events happen in the dry season. They occur a month or two after storm events of at least 100cfs
 
 13. Temperature also impacts the solubility of oxygen in water. More oxygen can dissolve when temperatures are *lower*. How would you analyze the effects of temperature on dissolved oxygen concentrations? What data would you need? How would you separate the effects of temperature from the effects of flow?
 
-> 
+> I would need temperature at the location over a period of time, as well as dissolved oxygen concentrations over a similar period of time. Then I might average both values by month and look at seasonal changes. It would be difficult to separate them completely, as temperature affects precipitation. I would try to exclude extreme discharge events (the times they happened) when looking at the relationship between temperature and O concentrations. 
 
 14. What do you think is the biggest driver of hypoxia in New Hope Creek? What data do you use to support your conclusion?
 
-> 
+> I think the biggest driver of hypoxia are the nutrient levels (Nitrogen and Phosphorus). I would use the stacked plot of their levels over time and compare that to the O concentration levels over time to support my conclusion.
 
 ## Reflection
 15. What are 2-3 conclusions or summary points about river water quality you learned through your analysis?
 
->
+> In conclusion, nutrient levels are by far the most useful predictors of hypoxia. Seasonal variation might account for some O concentration variation, but not on the same scale that Nitrogen and Phosphorus do. 
 
 16. What data, visualizations, and/or models supported your conclusions from 15?
 
-> 
+> Basically all of the plots I generated support this conclusion: the O concentration one, the stacked plot of nutrient concentrations, and the dygraph of discharge and O concentration.
 
 17. Did hands-on data analysis impact your learning about water quality relative to a theory-based lesson? If so, how?
 
->
+> Yes! The interactive graph especially helped me go day by day, month by month, and year by year to track possible trends in discharge and O concentration.
 
 18.	How did the real-world data compare with your expectations from theory?
 
->
+> They matched up pretty well. I already knew the impact that Nitrogen and Phosphorus has on oxygen levels, so this lesson just gave me concrete proof.
