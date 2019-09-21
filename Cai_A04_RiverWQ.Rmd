@@ -27,6 +27,15 @@ The completed exercise is due on 25 September 2019 at 9:00 am.
 3. Set your ggplot theme (can be theme_classic or something else)
 
 ```{r setup}
+getwd()
+
+library(tidyverse)
+library(dataRetrieval)
+library(cowplot)
+library(xts)
+library(dygraphs)
+
+theme_set(theme_classic())
 
 ```
 
@@ -38,18 +47,35 @@ This assignment will look at another measure of water quality - oxygen concentra
 4. Import the oxygen water quality data from New Hope Creek at Blands (using `readNWISqw()`, site code `02097314`, parameter code `00300`). Make a data frame called `O2.dat` that includes only the Date and O~2~ concentration values. Give your data frame understandable column names.
 
 ```{r read_data}
+#Read in data
+dat.raw <- readNWISqw(siteNumbers = "02097314",
+                      parameterCd = "00300",
+                      startDate = "",
+                      endDate = "")
+#O2 data frame
+O2.dat <- dat.raw %>%
+  select(Date = sample_dt,
+         Value = result_va) %>%
+  rename(Date = 'Date',
+         OConcen_mgL = 'Value')
 
 ```
 
 5. Create a ggplot of oxygen concentrations over time. Include a horizonal line at 2 mg/l to show the hypoxia cutoff. 
 
 ```{r}
+O2.plot <- ggplot(O2.dat, aes(x = Date, y = OConcen_mgL)) +
+  geom_line() +
+  geom_hline(yintercept = 2, color = "grey", alpha = 0.8, lwd = 2, lty = 2) +
+  ggtitle("O Concentration of New Hope Creek Over Time") +
+  labs(y = "Oxygen Concentration (mg/L)")
 
+print(O2.plot)
 ```
 
 6. What do you notice about the frequency of hypoxia overtime?
 
-> 
+> I notice that hypoxia occured twice in the early part of the data set, specifically around the mid-1980s, but did not occur a single time afterwards, up until present day.
 
 ## Nutrients
 
@@ -57,25 +83,66 @@ This assignment will look at another measure of water quality - oxygen concentra
 
 
 ```{r read_nutrients}
+nutrients.raw <- readNWISqw(siteNumbers = "02097314",
+                            parameterCd = c("00600",
+                                            "00665"),
+                            startDate = "",
+                            endDate = "")
 
+nutrients.dat <- nutrients.raw %>%
+  select(Date = sample_dt, 
+         Parameter = parm_cd, 
+         Value = result_va) %>%
+  group_by(Date, Parameter) %>%
+  summarize(Value = mean(Value)) %>%
+  spread(key = Parameter, value = Value) %>%
+  rename(TotalNitrogen_mgl_N = '00600',
+         TotalPhosphorus_mgl_P = '00665')
 ```
 
 8. Create two ggplots stacked with cowplot that show nutrient concentrations over time.
 
 ```{r nutrient.plots)}
+#Nitrogen plot
+Nitrogen.plot <- ggplot(nutrients.dat, aes(x = Date)) +
+  geom_line(aes(y = TotalNitrogen_mgl_N)) +
+  labs(x = "", y = "Total Nitrogen Concentration (mg/L)") +
+  theme(legend.position = "top")
 
+print(Nitrogen.plot)
+
+
+Phosphorus.plot <- ggplot(nutrients.dat, aes(x = Date)) +
+  geom_line(aes(y = TotalPhosphorus_mgl_P)) +
+  labs(x = "", y = "Total Phosphorus Concentration (mg/L)") +
+  theme(legend.position = "top")
+
+print(Phosphorus.plot)
+
+Nutrient.plot <- plot_grid(Nitrogen.plot +
+                             labs(title = "Total Nitrogen", y = ""),
+                           Phosphorus.plot +
+                             labs(title = "Total Phosphorus", y = ""),
+                           ncol = 1)
+
+print(Nutrient.plot)
 ```
 
 9. What do these plots tell you about nutrient concentrations over time? How might this relate to your previous plot of hypoxia events?
 
-> 
+> They tell me that, over time, the nutrient concentrations at this location have leveled out despite peaking around the mid-1980s. This might show a correalation between nutrient levels and hypoxia, as the latter events occured around the same time as the nutrient level peaks. This seems to indicate the nutrient level peaks indeed resulted in increase in biomass growth, which consequently lowered the oxygen concentration to dangerous levels.
 
 ## Discharge and Temperature
 
 10. Turbulent flow in rivers mixes oxygen into the water column. As discharge decreases, water moves slower, and oxygen diffuses slower into the water from the atmosphere. Download and reformat the daily discharge data for New Hope Creek (function `readNWISdv()`, site `02097314`, parameter `00060`). 
 
 ```{r bring_discharge}
-
+install.packages("dataRetrieval")
+library(dataRetrieval)
+discharge.raw <- readNWISqw(siteNumbers = "02097314",
+                            parameterCd = "00060",
+                            startDate = "",
+                            endDate = "")
 ```
 
 11. Create a dygraph of discharge and oxygen concentrations. You should have discharge on the y axis and oxygen concentration on the y2 axis. Set your y-axes limits so that they don't change as you zoom in and out. (hint: use `dyAxis(..., valueRange = c(0, 6500))` for discharge & `dyAxis(..., valueRange = c(0, 13))` for oxygen).
