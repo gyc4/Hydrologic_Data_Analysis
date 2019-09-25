@@ -3,8 +3,8 @@ title: 'Assignment 4: Water Quality in Rivers'
 author: "Theo Cai"
 geometry: margin=2.54cm
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 editor_options:
   chunk_output_type: console
 ---
