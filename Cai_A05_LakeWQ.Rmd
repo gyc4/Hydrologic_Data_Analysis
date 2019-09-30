@@ -3,6 +3,7 @@ title: 'Assignment 5: Water Quality in Lakes'
 author: "Theo Cai"
 geometry: margin=2.54cm
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 editor_options:
