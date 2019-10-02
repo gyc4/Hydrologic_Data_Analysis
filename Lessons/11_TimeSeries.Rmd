@@ -49,7 +49,7 @@ Time series datasets come with several caveats, which need to be addressed in or
 
 Today, we will analyze discharge data from Clear Creek in Colorado, USA. Let's first look at what types of data are available for this dataset. 
 ```{r}
-ClearCreekSummary <- whatNWISdata(siteNumbers = "06719505")
+ClearCreekSummary <- whatNWISdata(siteNumbers = "06719505") #summary of the kinds of data available from this site
 ```
 Notice that mean daily discharge has been measured at this site since 1974, with over 16,000 measurements available. This will be a robust time series dataset for us to analyze changes that have occurred over the past 45 years. 
 
@@ -58,14 +58,14 @@ Let's gather all the discharge data available from this site. Notice that `readN
 ```{r}
 # Import data
 ClearCreekDischarge <- readNWISdv(siteNumbers = "06719505",
-                     parameterCd = "00060", # discharge (ft3/s)
+                     parameterCd = "00060", # discharge (ft3/s) automatically gets the mean daily value
                      startDate = "",
                      endDate = "")
 names(ClearCreekDischarge)[4:5] <- c("Discharge", "Approval.Code")
 class(ClearCreekDischarge$Date)
 
 # Learn about the variables and site
-attr(ClearCreekDischarge, "variableInfo")
+attr(ClearCreekDischarge, "variableInfo") #both metadata
 attr(ClearCreekDischarge, "siteInfo")
 
 # Plot discharge over time
@@ -84,7 +84,7 @@ The simplest option to characterize a time series is a linear regression.
 ClearCreekRegressionPlot <- 
   ggplot(ClearCreekDischarge, aes(x = Date, y = Discharge)) +
   geom_line() +
-  geom_smooth(method = "lm", se = FALSE, color = "#c13d75ff") +
+  geom_smooth(method = "lm", se = FALSE, color = "#c13d75ff") + #Added a linear regression line to the gglineplot
   labs(x = "", y = expression("Discharge (ft"^3*"/s)")) + 
   theme(plot.title = element_text(margin = margin(b = -10), size = 12), 
        axis.title.x = element_blank())
@@ -93,11 +93,11 @@ print(ClearCreekRegressionPlot)
 
 Is a linear regression an appropriate model for the data in this case? Why or why not?
 
-> 
+> no, because it's so seasonal.
 
 Are there situations where it would be appropriate to use a linear regression to model a time series? If so, what is an example?
 
->
+> yes, if it has less/no seasonality. maybe if you're looking at discharge of one specific date over multiple years.
 
 
 ## Decomposing a time series dataset
@@ -113,7 +113,10 @@ We first need to turn the discharge data into a time series object in R. This is
 
 Note: time series objects must be equispaced, which requires interpolation if the data have not been collected at regular intervals. In our case, we have daily data with no NAs in the data frame, so we don't need to worry about this.
 ```{r}
-ClearCreek_ts <- ts(ClearCreekDischarge[[4]], frequency = 365)
+ClearCreek_ts <- ts(ClearCreekDischarge[[4]], frequency = 365) #turn discharge data into a time series object. [4] specifies ONE column of data
+#only being able to specify one column of data means our data must be EVENLY, TEMPORALLY SPACED.
+
+#table(diff(ClearCreekDischarge$Date)) <- to check that no dates are missing
 
 ```
 
@@ -136,14 +139,14 @@ ClearCreek_Components <- mutate(ClearCreek_Components,
 # Visualize how the trend maps onto the data
 ggplot(ClearCreek_Components) +
   geom_line(aes(y = Observed, x = Date),  size = 0.25) +
-  geom_line(aes(y = trend, x = Date), color = "#c13d75ff") +
+  geom_line(aes(y = trend, x = Date), color = "#c13d75ff") + #Add trend line
   geom_hline(yintercept = 0, lty = 2) +
   ylab(expression("Discharge (ft"^3*"/s)"))
 
 # Visualize how the seasonal cycle maps onto the data
 ggplot(ClearCreek_Components) +
   geom_line(aes(y = Observed, x = Date),  size = 0.25) +
-  geom_line(aes(y = seasonal, x = Date), color = "#c13d75ff") +
+  geom_line(aes(y = seasonal, x = Date), color = "#c13d75ff") + #Add seasonal trend line
   geom_hline(yintercept = 0, lty = 2) +
   ylab(expression("Discharge (ft"^3*"/s)"))
 
