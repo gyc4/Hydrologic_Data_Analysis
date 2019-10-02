@@ -76,51 +76,63 @@ Examine potential correlations among your predictor variables. If your predictor
 1. Create a correlation plot for your 7 variables of interest (TN, TP, and the five predictor variables). What patterns do you see? (hint: function `corrplot` in the corrplot package. I like to use `upper = "ellipse"` inside the function).
 
 ```{r}
-LAGOSmatrix <- cor(LAGOSnutrient2[, 3:8])
+LAGOSmatrix <- cor(LAGOSnutrient2[, c(3:8)])
+corrplot(LAGOSmatrix, upper = "ellipse")
 
 ```
 
 What patterns do you see?
 
->
+> I see that tn correlates the closest with no2no3 (nitrates), while tp correlates the closest with chla (chlorophyl)
 
 2. Create two linear regression models (hint: function `lm`) to predict TN and TP using your five predictor variables. 
 
 ```{r}
+TNregression <- lm(data = LAGOSnutrient2, tn ~ no2no3 + nh4 + chla + secchi)
+summary(TNregression)
+
+TPregression <- lm(data = LAGOSnutrient2, tp ~ chla + no2no3 + nh4 + secchi)
+summary(TPregression)
 
 ```
 
 How much variance in TN and TP is accounted for by your full model?
 
->
+> 56.27% of TN variance is being accounted for, and 43.85% of TP variance is being accounted for.
 
 3. Calculate variance inflation factors (VIF) for each of the variables in both models (hint: `vif` function in the car package). VIF values exceeding 5-10 indicates an issue with multicollinearity for that variable. Note: you should evaluate VIF values separately for each model.
 
 ```{r}
-
+vif(TNregression)
+vif(TPregression)
 ```
 
 Which variable(s) might you choose to remove from each model based on VIF values?
 
->
+> It doesn't seem that I have to remove any of these variables based on their VIF values.
 
 4. With your revised list of predictor variables (you may have chosen to remove some variables from consideration), create a model that optimizes explanatory power and simplicity. Remember, it is possible to over-parameterize a linear model, when fewer variables might be more appropriate. To help with this tradeoff, we can use the **Akaike's Information Criterion (AIC)** to compute a stepwise regression that either adds explanatory variables from the bottom up or removes explanatory variables from a full set of suggested options. The smaller the AIC value, the better. 
 
 To create a stepwise regression, first create a model with the revised list of predictor variables, and then use the function `step(modelname)` to calculate AIC values and choose the most parsimonous model. Do this for both models (TN and TP). 
 
 ```{r}
-
+step(TNregression)
+step(TPregression)
 ```
 
 5. Based on the AIC analysis, create two final models predicting TN and TP concentrations with the combination of predictor variables recommended by the AIC analysis. 
 
 ```{r}
+TNrevisedregression <- lm(data = LAGOSnutrient2, tn ~ nh4 + chla + secchi)
+summary(TNregression)
 
+TPrevisedregression <- lm(data = LAGOSnutrient2, tp ~ no2no3 + nh4 + secchi)
+summary(TPregression)
 ```
 
 Interpret the effect of each variable on TN or TP (e.g., "TN increases by one unit with every z unit increase/decrease in x predictor variable")
 
->
+> 
 
 How much variance in TN and TP do your models account for?
 
