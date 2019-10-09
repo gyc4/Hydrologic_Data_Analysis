@@ -17,7 +17,7 @@ editor_options:
 
 High frequency data is usually defined as frequencies significantly lower than daily (e.g. 5-minute, 15-minute, 1 hr etc). What types of hydrological and biological processes happen on this timescale that we might want to investigate?
 
->
+> flash floods/fast storms, contaiminent spills, temperature over a day, oxygen content over a day
 
 
 ## Session Set Up
@@ -25,10 +25,19 @@ High frequency data is usually defined as frequencies significantly lower than d
 ```{r, message = FALSE}
 getwd()
 
+install.packages("EcoHydRology")
+library(EcoHydRology)
+
 packages <- c(
   "dataRetrieval", "tidyverse", "cowplot", "EcoHydRology", "xts", "dygraphs"
   )
 invisible(lapply(packages, library, character.only = TRUE)) 
+
+library(dataRetrieval)
+library(xts)
+library(tidyverse)
+library(cowplot)
+library(dygraphs)
 
 theme_set(theme_classic(base_size = 12))
 ```
@@ -37,7 +46,7 @@ theme_set(theme_classic(base_size = 12))
 
 ```{r download data}
 
-dischargedatTFC2018 <- readNWISuv(
+dischargedatTFC2018 <- readNWISuv( #<- new function, pulls high frequency data
   site = "02097280", #Third Fork Creek at Woodcroft Parkway Near Blands
   parameterCd = "00060",
   startDate = "2018-01-01", 
@@ -72,20 +81,22 @@ plot_grid(
 
 The shape and size of river hydrographs following rain events can tell us how water moves through a watershed. Once rain falls, how does water get to a stream? What would the streamflow do?
 
->
+> overland flow, goes into groundwater, directly in river, sewer pipes.
+> storms are peaks in discharge in the graph
 
 
 _"Hydrograph separation is one of the most desperate analysis techniques in use in hydrology" - Hewlett & Hibbert 1967_
 
 
 ```{r baseflowseparation}
+#we trying to separate base flow from quick flow
 TFCbaseflow <- BaseflowSeparation(
   dischargedatTFC2018$Flow_Inst, 
   filter_parameter = 0.925, 
   passes = 3
   )
 
-TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow)
+TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow) #binded together in the same order because they are the same length
 
 ggplot(TFC2018, aes(x = dateTime, y = Flow_Inst)) + 
   geom_line() +
@@ -102,23 +113,45 @@ dygraph(
   ) %>% 
   dyRangeSelector()
 
+#quick flow increases quickly, follows overall flow pretty closely in the early part of the storm
+#quick flow is overland, direct contact flow
+#base flow does not reach the stream as quickly. it peaks after quick flow peaks
+#base flow involves percolation and a slow release
+
 Export <- TFC2018 %>%
-  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_),
-         baseflowexport = bt * timestep,
+  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_), #calculating time intervals between measurements. NA_real_ --> 
+         baseflowexport = bt * timestep, #multiplying rate by time elapsed to get total volume
          quickflowexport = qft * timestep) %>%
-  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T),
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), #na.rm --> removes the NA value you added above
             QuickflowExport_cf = sum(quickflowexport, na.rm = T),
             TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+
+Export$BaseflowExport_cf/Export$TotalExport_cf*100
+Export$QuickflowExport_cf/Export$TotalExport_cf*100
   
 ```
 
 What percentage of water is exported from this watershed as baseflow? What percentage as quickflow?
 
-> 
+> Baseflow = 51.92%. Quickflow = 48.81%
 
 Repeat this analysis for Ellerbe Creek. How do the percentages compare?
 
->
+```{r}
+ECbaseflow <- BaseflowSeparation(dischargedatEC2018$Flow_Inst, filter_parameter = 0.925, passes = 3)
+
+EC2018 <- cbind(dischargedatEC2018, ECbaseflow)
+
+ExportEC <- EC2018 %>%
+  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_), #calculating time intervals between measurements. NA_real_ --> 
+         baseflowexport = bt * timestep, #multiplying rate by time elapsed to get total volume
+         quickflowexport = qft * timestep) %>%
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), #na.rm --> removes the NA value you added above
+            QuickflowExport_cf = sum(quickflowexport, na.rm = T),
+            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+
+```
+
 
 What does this mean physically about the watershed?
 
@@ -130,28 +163,28 @@ A "flashy" stream increases in flow faster following a precipitation event.
 
 Refering to our previous work with baseflow separation, would you expect flashiness to increase or decrease with urbanization?
 
-> 
+> Increase, because urbanization creates a lot of impervious surfaces
 
 What do you think "urban stream syndrom" refers to?
 
->
+> Flashiness is a symptom of this. Urban streams are typically very flashy, deeper, and have water quality concerns
 
 The Richards-Baker Index is an index of how flashy a stream is. It is calculated as $$RBI = (\sum_{j = 1}^n |Q_j - Q_{j-1}| / \sum_{j = 1}^n Q_j) / Catchment Area$$
 
 ```{r Flashiness}
-TFCsitedata <- readNWISsite(site = "02097280")
+TFCsitedata <- readNWISsite(site = "02097280") #metadata
 TFC.catchment.size <- TFCsitedata$drain_area_va #square miles
 
 RBI_TFC2018 <- (
-  sum(abs(diff(dischargedatTFC2018$Flow_Inst))) / 
+  sum(abs(diff(dischargedatTFC2018$Flow_Inst))) / #calculating the Richards-Baker Index!
     sum(dischargedatTFC2018$Flow_Inst[-1])
   ) / TFC.catchment.size
 
-ECsitedata <- readNWISsite(site = "0208675010")
+ECsitedata <- readNWISsite(site = "0208675010") #metadata
 EC.catchment.size <- ECsitedata$drain_area_va #square miles
 
 RBI_EC2018 <- (
-  sum(abs(diff(dischargedatEC2018$Flow_Inst))) / 
+  sum(abs(diff(dischargedatEC2018$Flow_Inst))) / #calculating the Richards-Baker Index!
     sum(dischargedatEC2018$Flow_Inst[-1])
   ) / EC.catchment.size
 
@@ -159,7 +192,32 @@ RBI_EC2018 <- (
 
 Which stream is flashier?
 
->
+> Ellebe Creek is flashier 
+
+```{r}
+whatNWISdata(parameterCD = "00060", statecd = "TX")
+
+dischargedatTFC2018 <- readNWISuv( #<- new function, pulls high frequency data
+  site = "02097280", #Third Fork Creek at Woodcroft Parkway Near Blands
+  parameterCd = "00060",
+  startDate = "2018-01-01", 
+  endDate = "2019-01-01"
+  ) %>% 
+  renameNWISColumns()
+
+dischargedatCC <- readNWISuv(
+  site = "07227448",
+  parameterCd = "00060",
+  stateDate = "2018-01-01",
+  endDate = "2019-01-01"
+) %>%
+  renameNWISColumns()
+```
+
+
+
+
+
 
 ## Chemical Flashiness
 
@@ -251,4 +309,4 @@ What hydrological processes did we investigate today?
 
 What can high-frequency data be used for that daily data may not be able to capture?
 
-> 
+> storm responses (total/base/quick flow) + biological changes/processes
