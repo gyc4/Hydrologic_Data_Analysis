@@ -26,7 +26,12 @@ Wednesday we used high-frequency hydrographs to learn about how water flows thro
 getwd()
 
 # install.packages("StreamPULSE")
-# install.packages("streamMetabolizer")
+install.packages("streamMetabolizer", dependencies=TRUE,
+                 repos=c("https://owi.usps.gov/R","https://cran.rstudio.com"))
+
+install.packages("devtools")
+library(devtools)
+install_github("streampulse/StreamPULSE")
 
 packages <- c(
   "dataRetrieval", 
@@ -86,11 +91,13 @@ ggplot(Potdat,
 
 Which of these rivers is more chemostatic?
 
->
+> Crane Creek
 
 ## Hysteresis Loops
 
 Hysteresis occurs when the concentration varies with discharge in a different relationship on the rising and falling limbs of a storm. This can be caused by _flushing_ behavior or _dilution_ behavior. 
+
+> hysteresis is caused by different kinds of water flow reaching the river at different times in the storm
 
 ```{r}
 dygraph(
@@ -105,9 +112,13 @@ dygraph(
 
 Look at the storm that occured around February 1st. Do you expect this storm to be a flushing or a diluting storm?
 
->
+> Diluting storm > one that increases flow but decreases concentration
+> Flushing storm > one that increases flow AND increases concentation
+
+> a diluting storm
 
 ```{r}
+#creating the hysteresis loop
 PotomacStorm <- Potdat %>%
   filter(dateTime > "2016-01-31" & dateTime < "2016-02-14") 
 
@@ -119,25 +130,28 @@ ggplot(PotomacStorm, aes(x = Flow_Inst, y = Nitrate_mgl, color = dateTime)) +
 
 Did this storm exhibit clockwise or counterclockwise hysteresis?
 
->
+> counterclockwise hysteresis
 
 Which direction do hysteresis loops slope for diluting storms?
 
->
+> negatively
 
 Which direction do hysteresis loops go for flushing storms?
 
->
+> postively (or negatively??)
 
 ## Using dissolved oxygen to estimate metabolism
 
 What is "ecosystem metabolism"?
 
->
+> how fast an ecosystem consumes and produces energy/carbon
 
 Why would we want to know the *GPP* and *ER* of a river reach?
 
->
+> GPP > Gross Primary Productivity
+> ER > Ecosystem Respiration - everything in the stream that respires carbon
+
+> indicates a lot about the condition of the river
 
 
 The StreamPulse project is a group of researchers around the world who are measuring oxygen concentrations in streams to determine the GPP and ER of many different types of streams and rivers from around the globe. We will be using data from their website for this class period. This project uses the R package `streamMetabolizer` to compute its estimates of metabolism and allows data download from its site using the `StreamPULSE` R package.
@@ -154,13 +168,13 @@ Enodat <- request_data(
   enddate = "2016-09-20"
   )
 
-Eno.lon <- Enodat[[2]]$lon
+Eno.lon <- Enodat[[2]]$lon #Double brackets calls one iten in a list
 
 Eno.DO <- Enodat[[1]] %>%
   spread(value = value, key = variable) %>%
-  mutate(DateTime_Solar = convert_UTC_to_solartime(DateTime_UTC, Eno.lon))
+  mutate(DateTime_Solar = convert_UTC_to_solartime(DateTime_UTC, Eno.lon)) #convert_UTC_to_solartime = function converts UTC to the solar time (what it would show on a sun dial at that exact location, at that exact time)
 
-ggplot(Eno.DO, aes(x = DateTime_Solar, y = DO_mgL)) + geom_line()
+ggplot(Eno.DO, aes(x = DateTime_Solar, y = DO_mgL)) + geom_line() 
 ```
 
 In a nutshell, the package uses a Bayesian statistical approach to fit the following model to the data: 
@@ -169,8 +183,9 @@ $\frac{dO_2}{dt} = P_t + R_t + D_t$
 
 What are P~t~, R~t~ and D~t~? What are these parameters functions of?
 
->
-
+> P_t = Productivity at that time step (Photosynthesis)
+> R_t = Respiration ""
+> D_t = Difusion
 
 Visit https://data.streampulse.org/ 
 
