@@ -1,0 +1,188 @@
+---
+title: "Assignment 7: High Frequency Data"
+author: "Theo Cai"
+output: pdf_document
+geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
+---
+
+## OVERVIEW
+
+This exercise accompanies the lessons in Hydrologic Data Analysis on high frequency data
+
+## Directions
+1. Change "Student Name" on line 3 (above) with your name.
+2. Work through the steps, **creating code and output** that fulfill each instruction.
+3. Be sure to **answer the questions** in this assignment document.
+4. When you have completed the assignment, **Knit** the text and code into a single pdf file.
+5. After Knitting, submit the completed exercise (pdf file) to the dropbox in Sakai. Add your last name into the file name (e.g., "A07_Chamberlin.pdf") prior to submission.
+
+The completed exercise is due on 16 October 2019 at 9:00 am.
+
+## Setup
+
+1. Verify your working directory is set to the R project file, 
+2. Load the StreamPULSE, streamMetabolizer and tidyverse packages. 
+3. Set your ggplot theme (can be theme_classic or something else)
+
+
+```{r setup}
+getwd()
+
+library(devtools)
+install_github('streampulse/StreamPULSE')
+
+
+install.packages("streamMetabolizer", dependencies=TRUE, 
+  repos=c("https://owi.usgs.gov/R","https://cran.rstudio.com"))
+
+library(tidyverse)
+library(StreamPULSE)
+library(streamMetabolizer)
+library(gridExtra)
+library(tidyverse)
+library(cowplot)
+
+theme_set(theme_classic())
+
+```
+
+
+4. Download data from the Stream Pulse portal using `request_data()` for the Kansas River, ("KS_KANSASR"). Download the discharge (`Discharge_m3s`), disolved oxygen (`DO_mgL`) and nitrate data (`Nitrate_mgL`) for the entire period of record
+
+5. Reformat the data into one dataframe with columns DateTime_UTC, DateTime_Solar (using `convert_UTC_to_solartime()`), SiteName, DO_mgL, Discharge_m3s, and Nitrate_mgL.
+```{r Datadownload}
+Kansas.dat <- request_data(
+  sitecode = "KS_KANSASR",
+  variables = c('Discharge_m3s', 'DO_mgL', 'Nitrate_mgL')
+)
+
+Kansas.lon <- Kansas.dat[[2]]$lon
+
+Kansas.var <- Kansas.dat[[1]] %>%
+  spread(value = value, key = variable) %>%
+  mutate(DateTime_Solar = convert_UTC_to_solartime(DateTime_UTC, Kansas.lon)) %>%
+  select(site, DateTime_UTC, DateTime_Solar, DO_mgL, Discharge_m3s, Nitrate_mgL)
+```
+
+6. Plot each of the 3 variables against solar time for the period of record
+
+```{r}
+Discharge.plot <-
+  ggplot(Kansas.var, aes(x = DateTime_Solar, y = Discharge_m3s)) + 
+  geom_line() +
+  labs(x = "", y = "Discharge (m3/s)")
+
+DO.plot <-
+  ggplot(Kansas.var, aes(x = DateTime_Solar, y = DO_mgL)) + 
+  geom_line() +
+  labs(x = "", y = "DO (mg/L)")
+
+Nitrate.plot <-
+  ggplot(Kansas.var, aes(x = DateTime_Solar, y = Nitrate_mgL)) + 
+  geom_line() +
+  labs(y = "Nitrate (mg/L)")
+
+Combined.plot <-
+  plot_grid(Discharge.plot, DO.plot, Nitrate.plot,
+            ncol = 1)
+print(Combined.plot)
+```
+
+7. How will you address gaps in these dataseries?
+
+> I think that I can address these gaps by analyzing each of the continuous chunks separately. I think this would technically be called a step-trend analysis (if I choose to do a time series analysis), even though the breaks in data seem to be arbitrary/do not seem to mark a distinct policy change.
+
+8. How does the daily amplitude of oxygen concentration swings change over the season? What might cause this?
+
+> The daily amplitude of oxygen concentration seem to trend downwards over the course of the winter -> summer seasons. This is likely due to rising temperatures during that same time period - oxygen dissolves easier in cold water.
+
+## Baseflow separation
+9. Use the `EcoHydRology::BaseflowSeparation()` function to partition discharge into baseflow and quickflow, and calculate how much water was exported as baseflow and quickflow for this time period. Use the DateTime_UTC column as your timestamps in this analysis.
+
+The `package::function()` notation being asked here is a way to call a function without loading the library. Sometimes the EcoHydRology package can mask tidyverse functions like pipes, which will cause problems for knitting. In your script, instead of just typing `BaseflowSeparation()`, you will need to include the package and two colons as well.
+
+10. Create a ggplot showing total flow, baseflow, and quickflow together. 
+
+
+```{r}
+Kansas.base <- 
+  drop_na(Kansas.var)
+
+Kansas.baseflow <- EcoHydRology::BaseflowSeparation(
+  Kansas.base$Discharge_m3s
+)
+
+Kansas.flow <- cbind(Kansas.base, Kansas.baseflow)
+
+ggplot(Kansas.flow, aes(x = DateTime_UTC, y = Discharge_m3s)) +
+  geom_line() +
+  geom_line(mapping = aes(x = DateTime_UTC, y = bt), color = "coral3") +
+  geom_line(mapping = aes(x = DateTime_UTC, y = qft), color = "lightseagreen")
+
+
+Export <- Kansas.flow %>%
+  mutate(timestep = c(diff(as.numeric(DateTime_UTC)), NA_real_),
+         baseflowexport = bt * timestep,
+         quickflowexport = qft * timestep) %>%
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T),
+            QuickflowExport_cf = sum(quickflowexport, na.rm = T),
+            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+
+Export$BaseflowExport_cf/Export$TotalExport_cf*100
+Export$QuickflowExport_cf/Export$TotalExport_cf*100
+
+```
+
+
+11. What percentage of total water exported left as baseflow and quickflow from the Kansas River over this time period?
+
+> 94.61% of the total water exported was baseflow, and 5.39% was quickflow.
+
+12. This is a much larger river and watershed than the 2 we investigated in class. How does the size of the watershed impact how flow is partitioned into quickflow and baseflow? 
+
+> The size of the watershed impacts the amount of quickflow we see. The bigger the watershed, the more the overland flow needs to travel to reach the river. And of course, as this flow travels across the land, it has more opportunities to soak into the ground and percolate into the groundwater, later becoming base flow, the more land it has to cross.
+
+13. The site we are looking at is also further down in its river network (i.e. instead of being a headwater stream, this river has multiple tributaries that flow into it). How does this impact your interpretation of your results?
+
+> I think this might imply that some of the baseflow we see is not just from the groundwater immediate to the site, but also from baseflows from other, further rivers. The calibrated baseflow of this one river might be lower than shown here.
+
+## Chemical Hysteresis
+
+14. Create a ggplot of flow vs. nitrate for the large storm in May (~May 1 - May 20). Use color to represent Date and Time.
+
+```{r}
+Kansas.storm <- Kansas.flow %>%
+  filter(DateTime_UTC > "2018-05-01 00:00:00" & DateTime_UTC < "2018-05-20 23:00:00")
+
+ggplot(Kansas.storm, aes(x = Discharge_m3s, y = Nitrate_mgL, color = DateTime_UTC)) +
+  geom_point() +
+  labs(x = "Discharge (m3/s)", y = "Nitrate (mg/L)")
+
+```
+
+15. Does this storm show clockwise or counterclockwise hysteresis? Was this storm a flushing or diluting storm?
+
+> This storm shows a counterclockwise hysteresis. It was a flushing storm.
+
+16. What does this mean for how nitrate gets into the river from the watershed?
+
+> This means that nitrate in this river comes primarily from overland flow, and it is not as present in the groundwater/baseflow.
+
+## Reflection
+17. What are 2-3 conclusions or summary points about high frequency data you learned through your analysis?
+
+> I learned that breaks in high-frequency data make it harder to analyze, but not impossible. I also learned that high frequency data is extremely useful in analyzing the effects of individual storms, even if they only last a week or two
+
+18. What data, visualizations, and/or models supported your conclusions from 17?
+
+> My final ggplot/hysteresis plot supported both conclusions
+
+19. Did hands-on data analysis impact your learning about high frequency data relative to a theory-based lesson? If so, how?
+
+> Yes, it did. It really helped me visualize concretely the theories about baseflow, quick flow, and hysteresis loops.
+
+20.	How did the real-world data compare with your expectations from theory?
+
+> It matched up pretty well! 
