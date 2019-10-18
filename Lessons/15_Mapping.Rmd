@@ -220,7 +220,7 @@ We might want to visualize how monitoring efforts and secchi depths have changed
 ```{r}
 # add a "decade" column 
 LAGOScombined <- LAGOScombined %>%
-  mutate(decade = floor_date(sampledate, years (10)),
+  mutate(decade = floor_date(sampledate, years (10)), #floor_date only gives us the first day of the decade year. it's a "rounding" function for dates
          decade = year(decade))
 
 # create a new summary data frame, with each lake divided by decade
@@ -232,14 +232,14 @@ secchi.summary.decade <- LAGOScombined %>%
   drop_na()
 
 # create a simple features object
-secchi.decade.spatial <- st_as_sf(secchi.summary.decade, coords = c("long", "lat"), crs = 4326)
+secchi.decade.spatial <- st_as_sf(secchi.summary.decade, coords = c("long", "lat"), crs = 4326) #turn it into a spatial dataframe. crs = (projection system)
 
 # plot the data with decades as separate facets
 Secchiplot <- ggplot() +
   geom_sf(data = states.subset, fill = "white") +
   geom_sf(data = secchi.decade.spatial, aes(color = secchi.mean), 
           alpha = 0.5, size = 1) +
-  facet_wrap(vars(decade), ncol = 5) +
+  facet_wrap(vars(decade), ncol = 5) + #facet_wrap lets you specify decade column information
   scale_color_viridis_c() +
   labs(color = "Average Secchi Depth (m)") +
   theme(legend.position = "top")
@@ -251,7 +251,7 @@ Faceting can be an effective way to visualize data over time. But, R has additio
 Note: we have installed and loaded `gganimate`, but RStudio may prompt you to install additional packages. Do this as needed until the code runs without error. 
 
 ```{r}
-Secchi.Animation <- ggplot() +
+Secchi.Animation <- ggplot() + #p much same code as above, just without facet_wrap
   geom_sf(data = states.subset, fill = "white") +
   geom_sf(data = secchi.decade.spatial, aes(color = secchi.mean), 
           alpha = 0.5, size = 1) +
@@ -259,9 +259,16 @@ Secchi.Animation <- ggplot() +
   theme(legend.position = "top") +
   #gganimate code here:
   labs(title = 'Decade: {closest_state}', color = "Average Secchi Depth (m)") +
-  transition_states(decade, state_length = 1, transition_length = 0) +
+  transition_states(decade, state_length = 1, transition_length = 0) + #don't want transition bc otherwise the points move from one decade to the next
   enter_appear() +
   exit_disappear() 
+
+install.packages("gifski")
+install.packages("png")
+install.packages("transformr")
+library(gifski)
+library(png)
+library(transformr)
 
 anim_save('Secchi.Animation.gif', animate(Secchi.Animation, height = 400, wid = 600, renderer = gifski_renderer(loop = TRUE)))
 

@@ -35,8 +35,8 @@ Today, we will be working with the USA rivers shape file (see metadata file in R
 
 ### Water features line objects
 ```{r}
-waterfeatures <- st_read("../Data/Raw/hydrogl020.dbf")
-class(waterfeatures)
+waterfeatures <- st_read("./Data/Raw/hydrogl020.dbf")
+class(waterfeatures) #it's already listed as a simple features data frame
 
 # Filter for North Carolina
 waterfeatures <- filter(waterfeatures, STATE == "NC")
@@ -50,9 +50,9 @@ The .dbf file extension represents an ESRI shapefile. From the `st_read` functio
 ```{r}
 Waterfeaturesplot <- 
 ggplot(waterfeatures) +
-  geom_sf(aes(fill = FEATURE, color = FEATURE)) +
-  scale_color_viridis_d(option = "magma", end = 0.9) +
-  scale_fill_viridis_d(option = "magma", end = 0.9)
+  geom_sf(aes(fill = FEATURE, color = FEATURE)) + #call both fill and color to generate the nice boxes in the output legend
+  scale_color_viridis_d(option = "magma", end = 0.9) + #end scale before the yellow end
+  scale_fill_viridis_d(option = "magma", end = 0.9) #viridis_d = discrete!!!
 print(Waterfeaturesplot)
 
 ```
@@ -61,7 +61,7 @@ print(Waterfeaturesplot)
 
 We will upload the HUC6 watershed designations for North Carolina. Note that in the Watersheds_Spatial folder, there are many different shape file datasets going from HUC2 (largest) to HUC16 (smallest) and NWIS drainage lines. These are all downloaded as zip from the Watershed Boundary Dataset (WBD).
 ```{r}
-HUC6 <- st_read("../Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
+HUC6 <- st_read("./Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
 
 summary(HUC6$States)
 HUC6.NC <- HUC6 %>%
@@ -82,12 +82,12 @@ st_crs(HUC6.NC)
 waterfeatures <- st_set_crs(waterfeatures, 4269)
 st_crs(waterfeatures)
 
-#waterfeatures <- waterfeatures %>% st_set_crs(st_crs(HUC6.NC))
+waterfeatures <- waterfeatures %>% st_set_crs(st_crs(HUC6.NC))
 
 NClayers <- ggplot() +
-  geom_sf(data = HUC6.NC, aes(fill = Name), color = "darkgray", alpha = 0.5) +
+  geom_sf(data = HUC6.NC, aes(fill = Name), color = "darkgray", alpha = .6) +
   geom_sf(data = waterfeatures) +
-  scale_fill_brewer(palette = "Paired")
+  scale_fill_brewer(palette = "Paired") #qualitative palette
 print(NClayers)
 
 ```
@@ -100,7 +100,7 @@ More information here: https://geocompr.robinlovelace.net/
 HUC6.Neuse <- filter(HUC6.NC, Name == "Neuse")
 
 Neusebasin <- ggplot() +
-  geom_sf(data = HUC6.Neuse, fill = "darkgray") +
+  geom_sf(data = HUC6.Neuse, fill = "darkgray") + #code this first so everything else plots on top
   geom_sf(data = waterfeatures, aes(fill = FEATURE, color = FEATURE)) +
   xlim(c(-79.2, -75.9)) +
   ylim(c(34.5, 36.5)) +
@@ -112,7 +112,7 @@ print(Neusebasin)
 
 What features are prevalent in the Neuse River basin? Where do certain features occur in the hydrologic network? How does this distribution compare to nearby basins?
 
-> 
+> Streams, reservoirs (dams too), and shoreline. Intracoastal Waterway also runs through.
 
 ## Closing Discussion
 
