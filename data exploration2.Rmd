@@ -45,15 +45,27 @@ print(NorthWestRiverPlot2)
 
 
 ```{r}
+Summary <- whatNWISdata(siteNumbers = "02087183")
 
-TullRiver <- readNWISuv(siteNumbers = "02043415",
-                           parameterCd = "00060",
-                           startDate = "",
-                           endDate = "")
 
-TullRiver2 <- readNWISdv(siteNumbers - "02043415",
-                         parameterCd = "00095",
-                         startDate = "",
-                         endDate = "")
+Neuse <- readNWISuv(siteNumbers = "02086849",
+                             parameterCd = "00060",
+                             startDate = "1960-11-01",
+                             endDate = "1995-04-18")
+
+Neuse2 <- readNWISqw(siteNumbers = "02087183",
+                             parameterCd = "00095",
+                             startDate = "",
+                             endDate = "")
+
+NeusePlot <-
+  ggplot(Neuse, aes(x = dateTime, y = X_00060_00000)) +
+  geom_line(alpha = 0.5)
+print(NeusePlot)
+
+NeusePlot2 <-
+  ggplot(Neuse2, aes(x = sample_dt, y = result_va)) +
+  geom_line(alpha = 0.5)
+print(NeusePlot2)
 
 ```
